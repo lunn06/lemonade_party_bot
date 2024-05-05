@@ -1,13 +1,12 @@
+import base64
 import os
 
 import qrcode
-import base64
 from pyotp import TOTP
-from transliterate import translit
+# from transliterate import translit
 
 
 class Secret:
-
     DIR = os.getcwd() + os.sep + "secrets"
 
     def __init__(self, name: str):
@@ -26,7 +25,8 @@ class Secret:
     def generate_secret(self):
 
         b32_secret = base64.b32encode(
-            bytearray(translit(self.name, "ru", reversed=True), "ascii")
+            # bytearray(translit(self.name, "ru", reversed=True), "ascii")
+            bytearray(self.name, "ascii")
         ).decode("utf-8")
 
         uri = TOTP(b32_secret).provisioning_uri(name=self.name, issuer_name="ЛимонадКвест")
@@ -38,9 +38,6 @@ class Secret:
 
         return TOTP(b32_secret)
 
-    
     @classmethod
     def from_text(cls, name: str):
-        return Secret(name)
-
-
+        return cls(name)
