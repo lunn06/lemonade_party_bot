@@ -159,7 +159,9 @@ async def help_handler(msg: Message, i18n: TranslatorRunner):
 #         await msg.answer("Эту посхалку ты уже сканировал!!!!")
 
 
-@router.message(F.text.regexp(r"^\d{6}$") | F.text.regexp(r"^\d{3} \d{3}$"))
+@router.message(F.text.regexp(r"^\d{6}$"))
+@router.message(F.text.regexp(r"^\d{3} \d{3}$"))
+@router.message(F.text.regexp(r"^\d{2} \d{2} \d{2}$"))
 async def unique_handler(
         msg: Message,
         session: AsyncSession,

@@ -21,7 +21,7 @@ def pg_utcnow(element, compiler, **kw):
     return "TIMEZONE('utc', CURRENT_TIMESTAMP)"
 
 
-lottery = [i for i in range(100_000, 999_999)]
+lottery = [i for i in range(100_000, 110_000)]
 random.shuffle(lottery)
 lottery_deque = deque(lottery)
 

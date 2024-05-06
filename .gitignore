@@ -1,0 +1,5 @@
+.env
+alembic.ini
+
+secrets/
+bot/locales/ru/static/

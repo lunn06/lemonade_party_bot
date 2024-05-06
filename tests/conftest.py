@@ -1,17 +1,15 @@
+import asyncio
 from pathlib import Path
 
 import pytest
-import pytest_asyncio
 from aiogram import Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from alembic.command import upgrade, downgrade
 from alembic.config import Config as AlembicConfig
 from fluentogram import TranslatorHub, TranslatorRunner
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from bot.config_reader import parse_config, Config
-from bot.database.base import Base
-from bot.database.requests import prepare_database
 from bot.handlers import get_routers
 from bot.middlewares import DbSessionMiddleware, TranslatorRunnerMiddleware
 from bot.utils.i18n import create_translator_hub
@@ -94,7 +92,7 @@ def dp(engine, config) -> Dispatcher:
 
 # Фикстура, которая в каждом модуле применяет миграции
 # А после завершения тестов в модуле откатывает базу к нулевому состоянию (без данных)
-@pytest_asyncio.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def create(engine, alembic_config: AlembicConfig):
     upgrade(alembic_config, "head")
     yield engine
@@ -102,7 +100,32 @@ def create(engine, alembic_config: AlembicConfig):
 
 
 # Фикстура, которая передаёт в тест сессию из "движка"
-@pytest_asyncio.fixture(scope="function")
-async def session(engine, create):
-    async with AsyncSession(engine) as s:
-        yield s
+# @pytest.fixture(scope="function")
+# def get_session(engine, create):
+#     async def f() -> AsyncSession:
+#         async with AsyncSession(engine) as s:
+#             yield s
+#
+#     return f
+
+
+# @pytest_asyncio.fixture(scope="function")
+# async def pre_registered_user(session: AsyncSession):
+#     user_id = 987654
+#     user = User(telegram_id=user_id, user_name="test")
+#     session.add(user)
+#     await session.commit()
+#
+#     stmt = select(User).where(User.telegram_id == user_id)
+#
+#     yield await session.scalar(stmt)
+#
+#     stmt = delete(User).where(User.telegram_id == user_id)
+#     await session.execute(stmt)
+
+@pytest.yield_fixture(scope='session')
+def event_loop():
+    """Create an instance of the default event loop for each test case."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
