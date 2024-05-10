@@ -5,7 +5,7 @@ from bot.config_reader import Config
 from bot.database.models import User, UserStations, Station
 
 
-async def prepare_database(session: AsyncSession, config: Config):
+async def prepare_database(session: AsyncSession, config: Config) -> None:
     for st in config.stations_list:
         coast = config.usual_station_points
         is_special = False
@@ -20,7 +20,7 @@ async def prepare_database(session: AsyncSession, config: Config):
         )
 
 
-async def ensure_station(session: AsyncSession, station_name: str, coast: int, is_special: bool):
+async def ensure_station(session: AsyncSession, station_name: str, coast: int, is_special: bool) -> None:
     stmt = select(Station).where(Station.station_name == station_name)
     existing_station = await session.scalar(stmt)
 
@@ -61,7 +61,7 @@ async def get_user_by_id(session: AsyncSession, user_id: int) -> User | None:
     return await session.scalar(stmt)
 
 
-async def ensure_user(session: AsyncSession, user_id: int, user_name: str):
+async def ensure_user(session: AsyncSession, user_id: int, user_name: str) -> None:
     """
     Создаёт пользователя, если его раньше не было
     :param session: объект AsyncSession
@@ -85,7 +85,7 @@ async def get_stations_by_user_id(session: AsyncSession, user_id: int) -> list[U
     return user_stations
 
 
-async def ensure_user_station_by_id(session: AsyncSession, user_id: int, station_name: str):
+async def ensure_user_station_by_id(session: AsyncSession, user_id: int, station_name: str) -> None:
     user_stations = UserStations(
         telegram_id=user_id,
         station_name=station_name
@@ -96,7 +96,7 @@ async def ensure_user_station_by_id(session: AsyncSession, user_id: int, station
     await session.commit()
 
 
-async def test_connection(session: AsyncSession):
+async def test_connection(session: AsyncSession) -> int:
     """
     Проверка соединения с СУБД
     :param session: объект AsyncSession

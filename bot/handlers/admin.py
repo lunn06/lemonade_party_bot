@@ -16,7 +16,7 @@ router.message.filter(AdminFilter(config.admins))
 
 
 @router.message(Command("panel"))
-async def panel_handler(msg: Message):
+async def panel_handler(msg: Message) -> None:
     kb = [
         [types.KeyboardButton(text="Топ пользователей")],
     ]
@@ -28,7 +28,7 @@ async def panel_handler(msg: Message):
 
 # @router.callback_query(F.data == "top_users")
 @router.message(F.text == "Топ пользователей")
-async def top_callback(msg: Message, session: AsyncSession):
+async def top_users_handler(msg: Message, session: AsyncSession) -> None:
 
     top_users = await get_top_users(session)
     # await msg.answer("Ты думаешь, я тебе покажу их?")
@@ -42,45 +42,3 @@ async def top_callback(msg: Message, session: AsyncSession):
     message = "\n".join(top_users_format)
 
     await msg.answer(message)
-
-
-@router.message(Command("get_all"))
-async def get_all_handler(msg: Message):
-    if msg.from_user.id in ADMINS:
-        lotteries = User.select()
-        lotteries = map(lambda user: user.lottery, lotteries)
-        answer = ""
-        for l in lotteries:
-            answer += f"{l}\n"
-
-        await msg.answer(answer)
-
-
-async def send_photo(msg: Message, photo: str):
-    file = FSInputFile(photo)
-    send_file_object = await msg.answer_photo(photo=file)
-    print(send_file_object.photo[0].file_id)
-
-    # await msg.answer_photo(MAP_IMAGE_ID)
-
-
-# async def get_user_stations(uid: str):
-#     # with db.atomic():
-#     #     user = User.get(User.uid == uid)
-#     #     user_stations = UserCode.select().where(user.uid == uid)
-#
-#     data_list = await get_stations_by_user_id()
-#
-#     # return list(map(lambda user: user.station, user_stations))
-#     return list(map(lambda data: data['station'], data_list))
-
-
-async def get_user_codes(uid: str):
-    # with db.atomic():
-    #     user = User.get(User.uid == uid)
-    #     user_codes = UserCode.select().where(user.uid == uid)
-    #
-    # return list(map(lambda user: user.code, user_codes))
-
-    data_list = await db.get_data(uid)
-    return list(map(lambda data: data['code'], data_list))

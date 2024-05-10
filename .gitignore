@@ -1,5 +1,6 @@
 .env
 alembic.ini
 
+stubs/
 secrets/
 bot/locales/ru/static/

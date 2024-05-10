@@ -1,5 +1,7 @@
+from functools import lru_cache
+
 from environs import Env
-from pydantic import SecretStr, PostgresDsn
+from pydantic import SecretStr, PostgresDsn, DirectoryPath
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 env = Env()
@@ -10,16 +12,19 @@ class Config(BaseSettings):
     bot_token: SecretStr
 
     debug_mode: bool
+    empty_db: bool
     db_url: PostgresDsn
+    locales_path: DirectoryPath
     admins: list[int]
     stations_list: list[str]
     star_stations: list[str]
     star_station_points: int
     usual_station_points: int
 
-    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
+    # model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
 
+@lru_cache(maxsize=1)
 def parse_config() -> Config:
     return Config()
 

@@ -1,13 +1,14 @@
-import asyncio
 from pathlib import Path
 
 import pytest
+import pytest_asyncio
 from aiogram import Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from alembic.command import upgrade, downgrade
 from alembic.config import Config as AlembicConfig
 from fluentogram import TranslatorHub, TranslatorRunner
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from pytest_asyncio import is_async_test
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from bot.config_reader import parse_config, Config
 from bot.handlers import get_routers
@@ -59,8 +60,8 @@ def engine(config):
 
 
 @pytest.fixture(scope="session")
-def i18n() -> TranslatorRunner:
-    translator_hub = create_translator_hub()
+def i18n(config) -> TranslatorRunner:
+    translator_hub = create_translator_hub(config.locales_path)
     i18n = translator_hub.get_translator_by_locale("ru")
 
     return i18n
@@ -77,7 +78,7 @@ def dp(engine, config) -> Dispatcher:
 
     dispatcher.update.middleware(DbSessionMiddleware(session_pool=session_maker))
 
-    translator_hub: TranslatorHub = create_translator_hub()
+    translator_hub: TranslatorHub = create_translator_hub(config.locales_path)
     secrets = tuple(map(Secret.from_text, config.stations_list))
 
     dispatcher.update.middleware(TranslatorRunnerMiddleware())
@@ -92,7 +93,7 @@ def dp(engine, config) -> Dispatcher:
 
 # Фикстура, которая в каждом модуле применяет миграции
 # А после завершения тестов в модуле откатывает базу к нулевому состоянию (без данных)
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def create(engine, alembic_config: AlembicConfig):
     upgrade(alembic_config, "head")
     yield engine
@@ -100,14 +101,18 @@ def create(engine, alembic_config: AlembicConfig):
 
 
 # Фикстура, которая передаёт в тест сессию из "движка"
-# @pytest.fixture(scope="function")
-# def get_session(engine, create):
-#     async def f() -> AsyncSession:
-#         async with AsyncSession(engine) as s:
-#             yield s
-#
-#     return f
+@pytest_asyncio.fixture(scope="function")
+async def session(engine, create) -> AsyncSession:
+    async with AsyncSession(engine) as s:
+        yield s
 
+
+@pytest.hookimpl(trylast=True)
+def pytest_collection_modifyitems(items) -> None:
+    pytest_asyncio_tests = (item for item in items if is_async_test(item))
+    session_scope_marker = pytest.mark.asyncio(scope="session")
+    for async_test in pytest_asyncio_tests:
+        async_test.add_marker(session_scope_marker, append=False)
 
 # @pytest_asyncio.fixture(scope="function")
 # async def pre_registered_user(session: AsyncSession):
@@ -123,9 +128,9 @@ def create(engine, alembic_config: AlembicConfig):
 #     stmt = delete(User).where(User.telegram_id == user_id)
 #     await session.execute(stmt)
 
-@pytest.yield_fixture(scope='session')
-def event_loop():
-    """Create an instance of the default event loop for each test case."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# @pytest.yield_fixture(scope='session')
+# def event_loop():
+#     """Create an instance of the default event loop for each test case."""
+#     loop = asyncio.get_event_loop_policy().new_event_loop()
+#     yield loop
+#     loop.close()

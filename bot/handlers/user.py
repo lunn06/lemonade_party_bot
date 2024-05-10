@@ -6,7 +6,7 @@ from aiogram.types import Message
 from fluentogram import TranslatorRunner
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.config_reader import Config
+from bot.config_reader import Config, parse_config
 from bot.database.requests import (
     ensure_user,
     get_user_by_id,
@@ -18,7 +18,8 @@ from bot.utils.secrets import Secret
 from bot.utils.telegram import build_keyboard
 
 router = Router()
-outer_translator_hub = create_translator_hub()
+config = parse_config()
+outer_translator_hub = create_translator_hub(config.locales_path)
 outer_i18n_ru = outer_translator_hub.get_translator_by_locale("ru")
 
 
@@ -28,7 +29,7 @@ class BotState(StatesGroup):
 
 
 @router.message(CommandStart())
-async def start_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner):
+async def start_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner) -> None:
     keyboard = build_keyboard(
         i18n.wheretogo.button(),
         i18n.infocard.button(),
@@ -38,13 +39,16 @@ async def start_handler(msg: Message, session: AsyncSession, i18n: TranslatorRun
         i18n.help.button(),
     )
 
+    assert msg.from_user is not None
+
     try:
         await ensure_user(session, user_id=msg.from_user.id, user_name=msg.from_user.full_name)
     except sqlalchemy.exc.IntegrityError:
         await ensure_user(session, user_id=msg.from_user.id, user_name=msg.from_user.full_name)
 
     user = await get_user_by_id(session, msg.from_user.id)
-    # user = await get_user_by_id(session, msg.from_user.id)
+
+    assert user is not None
 
     start_message = i18n.start.message(lottery=user.lottery)
     await msg.answer(start_message, reply_markup=keyboard)
@@ -53,7 +57,9 @@ async def start_handler(msg: Message, session: AsyncSession, i18n: TranslatorRun
 
 # @router.message(F.text.contains("🍋 Куда пойти?") | F.text.contains("куда пойти") | F.text.contains("Куда пойти"))
 @router.message(F.text.contains(outer_i18n_ru.wheretogo.button()))
-async def wheretogo_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner, config: Config):
+async def wheretogo_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner, config: Config) -> None:
+    assert msg.from_user is not None
+
     user_stations = await get_stations_by_user_id(session, msg.from_user.id)
     # user_stations = [u.station_name for u in user_stations_rows]
 
@@ -104,7 +110,7 @@ async def wheretogo_handler(msg: Message, session: AsyncSession, i18n: Translato
 
 # @router.message(F.text.contains("🎯 Карта") | F.text.lower().contains("карта"))
 @router.message(F.text.contains(outer_i18n_ru.infocard.button()))
-async def infocard_handler(msg: Message, i18n: TranslatorRunner):
+async def infocard_handler(msg: Message, i18n: TranslatorRunner) -> None:
     await msg.answer(i18n.infocard.message())
     # await send_photo(msg, 'static/map.png')
     # await msg.answer_photo(MAP_IMAGE_ID)
@@ -112,7 +118,9 @@ async def infocard_handler(msg: Message, i18n: TranslatorRunner):
 
 # @router.message(F.text.contains("🤩 Моя статистика") | F.text.lower().contains("cтатистика"))
 @router.message(F.text.contains(outer_i18n_ru.statistics.button()))
-async def statistics_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner):
+async def statistics_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner) -> None:
+    assert msg.from_user is not None
+
     user = await get_user_by_id(session, msg.from_user.id)
     if user is None:
         await msg.answer(i18n.start.command.request())
@@ -122,7 +130,9 @@ async def statistics_handler(msg: Message, session: AsyncSession, i18n: Translat
 
 # @router.message(F.text.contains("🥰 Розыгрыш"))
 @router.message(F.text.contains(outer_i18n_ru.lottery.button()))
-async def lottery_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner):
+async def lottery_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner) -> None:
+    assert msg.from_user is not None
+
     user = await get_user_by_id(session, msg.from_user.id)
     if user is None:
         await msg.answer(i18n.start.command.request())
@@ -132,14 +142,14 @@ async def lottery_handler(msg: Message, session: AsyncSession, i18n: TranslatorR
 
 # @router.message(F.text.contains("🔥 Программа мероприятия") | F.text.lower().contains("программа мероприятия"))
 @router.message(F.text.contains(outer_i18n_ru.programma.button()))
-async def schedule_handler(msg: Message, i18n: TranslatorRunner):
+async def schedule_handler(msg: Message, i18n: TranslatorRunner) -> None:
     await msg.answer(i18n.programma.message())
 
 
 # @router.message(F.text.contains("🆘 Помощь") | F.text.lower().contains("помоги") | F.text.lower().contains("помощь"))
 @router.message(Command("help"))
 @router.message(F.text.contains(outer_i18n_ru.help.button()))
-async def help_handler(msg: Message, i18n: TranslatorRunner):
+async def help_handler(msg: Message, i18n: TranslatorRunner) -> None:
     await msg.answer(i18n.help.message())
 
 
@@ -168,11 +178,14 @@ async def unique_handler(
         config: Config,
         i18n: TranslatorRunner,
         secrets: list[Secret]
-):
+) -> None:
+    assert msg.text is not None
+    assert msg.from_user is not None
+
     msg_text = msg.text.replace(' ', '')
 
-    user_stations_names = await get_stations_by_user_id(session, msg.from_user.id)
-    # user_stations_names = list(st.station_name for st in user_stations)
+    user_stations = await get_stations_by_user_id(session, msg.from_user.id)
+    user_stations_names: list[str] = [station.station_name for station in user_stations]
 
     for secret in secrets:
         if not secret.verify(msg_text):
@@ -187,6 +200,8 @@ async def unique_handler(
         await ensure_user_station_by_id(session, msg.from_user.id, station)
 
         user = await get_user_by_id(session, msg.from_user.id)
+        assert user is not None
+
         if station in config.star_stations:
             user.points += config.star_station_points
             answer = i18n.station.arrangement(
@@ -220,5 +235,5 @@ async def unique_handler(
 
 
 @router.message()
-async def unexpected_handler(msg: Message, i18n: TranslatorRunner):
+async def unexpected_handler(msg: Message, i18n: TranslatorRunner) -> None:
     await msg.answer(i18n.unexpected.message())

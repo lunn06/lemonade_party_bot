@@ -18,16 +18,17 @@ from bot.utils.i18n import create_translator_hub
 from bot.utils.secrets import Secret
 
 
-async def main():
+async def main() -> None:
     config = parse_config()
 
-    engine = create_async_engine(url=str(config.db_url), echo=True)
+    engine = create_async_engine(url=str(config.db_url), echo=config.debug_mode)
 
-    meta = Base.metadata
-    async with engine.begin() as conn:
-        if config.debug_mode:
-            await conn.run_sync(meta.drop_all)
-        await conn.run_sync(meta.create_all)
+    if config.empty_db:
+        meta = Base.metadata
+        async with engine.begin() as conn:
+            if config.debug_mode:
+                await conn.run_sync(meta.drop_all)
+            await conn.run_sync(meta.create_all)
 
     session_maker = async_sessionmaker(engine, expire_on_commit=config.debug_mode)
 
@@ -36,7 +37,7 @@ async def main():
         if config.debug_mode:
             await prepare_database(session, config)
 
-    translator_hub: TranslatorHub = create_translator_hub()
+    translator_hub: TranslatorHub = create_translator_hub(config.locales_path)
     secrets = tuple(map(Secret.from_text, config.stations_list))
 
     dp = Dispatcher(storage=MemoryStorage())

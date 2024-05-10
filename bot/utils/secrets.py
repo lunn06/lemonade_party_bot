@@ -1,12 +1,19 @@
+from __future__ import annotations
+
 import base64
 import os
 
 import qrcode
 from pyotp import TOTP
+
+
 # from transliterate import translit
 
 
 class Secret:
+    name: str
+    secret: TOTP
+
     DIR = os.getcwd() + os.sep + "secrets"
 
     def __init__(self, name: str):
@@ -22,7 +29,7 @@ class Secret:
         else:
             return answer
 
-    def generate_secret(self):
+    def generate_secret(self) -> TOTP:
 
         b32_secret = base64.b32encode(
             # bytearray(translit(self.name, "ru", reversed=True), "ascii")
@@ -39,5 +46,5 @@ class Secret:
         return TOTP(b32_secret)
 
     @classmethod
-    def from_text(cls, name: str):
+    def from_text(cls, name: str) -> Secret:
         return cls(name)
