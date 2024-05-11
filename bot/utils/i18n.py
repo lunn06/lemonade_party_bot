@@ -11,6 +11,7 @@ from bot.config_reader import parse_config
 def create_translator_hub(locales_path: DirectoryPath) -> TranslatorHub:
     locales_regex = str(locales_path) + os.sep + "**" + os.sep + "*.ftl"
     filenames = [ftl_file for ftl_file in glob(locales_regex, recursive=True)]
+    print(filenames)
 
     translator_hub = TranslatorHub(
         {

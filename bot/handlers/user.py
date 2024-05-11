@@ -184,8 +184,8 @@ async def unique_handler(
 
     msg_text = msg.text.replace(' ', '')
 
-    user_stations = await get_stations_by_user_id(session, msg.from_user.id)
-    user_stations_names: list[str] = [station.station_name for station in user_stations]
+    user_stations_names: list[str] = await get_stations_by_user_id(session, msg.from_user.id)
+    # user_stations_names: list[str] = [station.station_name for station in user_stations]
 
     for secret in secrets:
         if not secret.verify(msg_text):
@@ -222,7 +222,7 @@ async def unique_handler(
 
         user_stations_names += [secret.name]
 
-        if set(config.star_stations).issubset(set(user_stations_names)):
+        if set(config.star_stations) <= set(user_stations_names):
             answer = i18n.star.message()
 
         if sorted(config.stations_list) == sorted(user_stations_names):

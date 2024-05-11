@@ -76,7 +76,7 @@ async def ensure_user(session: AsyncSession, user_id: int, user_name: str) -> No
     await session.commit()
 
 
-async def get_stations_by_user_id(session: AsyncSession, user_id: int) -> list[UserStations]:
+async def get_stations_by_user_id(session: AsyncSession, user_id: int) -> list[str]:
     stmt = select(UserStations.station_name).where(UserStations.telegram_id == user_id)
 
     res = await session.execute(stmt)

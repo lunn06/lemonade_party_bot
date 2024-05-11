@@ -1,14 +1,14 @@
+import asyncio
 from pathlib import Path
 
 import pytest
-import pytest_asyncio
+import uvloop
 from aiogram import Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from alembic.command import upgrade, downgrade
 from alembic.config import Config as AlembicConfig
 from fluentogram import TranslatorHub, TranslatorRunner
-from pytest_asyncio import is_async_test
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from bot.config_reader import parse_config, Config
 from bot.handlers import get_routers
@@ -16,6 +16,23 @@ from bot.middlewares import DbSessionMiddleware, TranslatorRunnerMiddleware
 from bot.utils.i18n import create_translator_hub
 from bot.utils.secrets import Secret
 from tests.mocked_aiogram import MockedBot, MockedSession
+
+
+@pytest.yield_fixture(scope='session')
+def event_loop_policy():
+    return uvloop.EventLoopPolicy()
+    # return asyncio.get_event_loop_policy()
+
+
+@pytest.fixture(scope="session")
+def event_loop(event_loop_policy):
+    asyncio.set_event_loop_policy(event_loop_policy)
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
 
 
 # Фикстура для получения экземпляра фейкового бота
@@ -32,7 +49,7 @@ def config() -> Config:
     return parse_config()
 
 
-# Фикстура, которая создаёт объект конфигурации alembic.ini для применения миграций
+# Фикстура, которая создаёт объект конфигурации alembic.ini.BAK для применения миграций
 @pytest.fixture(scope="session")
 def alembic_config(config: Config) -> AlembicConfig:
     project_dir = Path(__file__).parent.parent
@@ -59,10 +76,11 @@ def engine(config):
     engine.sync_engine.dispose()
 
 
+# @pytest.fixture(scope="function")
 @pytest.fixture(scope="session")
 def i18n(config) -> TranslatorRunner:
     translator_hub = create_translator_hub(config.locales_path)
-    i18n = translator_hub.get_translator_by_locale("ru")
+    i18n = translator_hub.get_translator_by_locale(locale="ru")
 
     return i18n
 
@@ -87,50 +105,16 @@ def dp(engine, config) -> Dispatcher:
 
     dispatcher["secrets"] = secrets
     dispatcher["_translator_hub"] = translator_hub
+    dispatcher["config"] = config
 
     return dispatcher
 
 
 # Фикстура, которая в каждом модуле применяет миграции
 # А после завершения тестов в модуле откатывает базу к нулевому состоянию (без данных)
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def create(engine, alembic_config: AlembicConfig):
     upgrade(alembic_config, "head")
     yield engine
+    # yield
     downgrade(alembic_config, "base")
-
-
-# Фикстура, которая передаёт в тест сессию из "движка"
-@pytest_asyncio.fixture(scope="function")
-async def session(engine, create) -> AsyncSession:
-    async with AsyncSession(engine) as s:
-        yield s
-
-
-@pytest.hookimpl(trylast=True)
-def pytest_collection_modifyitems(items) -> None:
-    pytest_asyncio_tests = (item for item in items if is_async_test(item))
-    session_scope_marker = pytest.mark.asyncio(scope="session")
-    for async_test in pytest_asyncio_tests:
-        async_test.add_marker(session_scope_marker, append=False)
-
-# @pytest_asyncio.fixture(scope="function")
-# async def pre_registered_user(session: AsyncSession):
-#     user_id = 987654
-#     user = User(telegram_id=user_id, user_name="test")
-#     session.add(user)
-#     await session.commit()
-#
-#     stmt = select(User).where(User.telegram_id == user_id)
-#
-#     yield await session.scalar(stmt)
-#
-#     stmt = delete(User).where(User.telegram_id == user_id)
-#     await session.execute(stmt)
-
-# @pytest.yield_fixture(scope='session')
-# def event_loop():
-#     """Create an instance of the default event loop for each test case."""
-#     loop = asyncio.get_event_loop_policy().new_event_loop()
-#     yield loop
-#     loop.close()

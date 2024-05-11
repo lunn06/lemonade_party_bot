@@ -1,6 +1,6 @@
-import asyncio
 import logging
 
+import uvloop
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums.parse_mode import ParseMode
@@ -62,4 +62,5 @@ async def main() -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(main())
+    # asyncio.run(main())
+    uvloop.run(main())
