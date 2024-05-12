@@ -2,7 +2,7 @@ from functools import lru_cache
 
 from environs import Env
 from pydantic import SecretStr, PostgresDsn, DirectoryPath
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 env = Env()
 env.read_env()
@@ -14,6 +14,10 @@ class Config(BaseSettings):
     debug_mode: bool
     empty_db: bool
     db_url: PostgresDsn
+    webhook_url: str
+    webhook_path: str
+    port: int
+    telegram_secret_token: str
     locales_path: DirectoryPath
     admins: list[int]
     stations_list: list[str]
@@ -31,4 +35,4 @@ def parse_config() -> Config:
 
 if __name__ == "__main__":
     config = parse_config()
-    print(config.model_dump())
+    print(config.webhook_url)
