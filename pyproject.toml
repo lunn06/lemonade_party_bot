@@ -26,26 +26,14 @@ fastapi = "^0.111.0"
 [tool.poetry.group.dev.dependencies]
 alembic = "^1.13.1"
 pytest = "^8.2.0"
-#pytest-asyncio = "^0.23.6"
 mypy = "^1.10.0"
-#anyio = "^4.3.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-#[tool.pyright]
-#include = ["bot"]
-#exclude = ["**/secrets"]
-## defineConstant = { DEBUG = true }
-#typeCheckingMode = "off"
-# reportPropertyTypeMismatch = "off"
-#reportMissingImports = true
-#reportMissingTypeStubs = false
-
 [tool.mypy]
 mypy_path = "$MYPY_CONFIG_FILE_DIR/stubs/bot"
-#disallow_untyped_defs = true
 no_warn_no_return = true
 exclude = ["tests"]
 
