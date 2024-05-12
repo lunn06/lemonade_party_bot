@@ -1,5 +1,5 @@
 .env
-alembic.ini.BAK
+alembic.ini
 
 stubs/
 secrets/
