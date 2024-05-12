@@ -5,7 +5,6 @@ from aiogram import Bot, Dispatcher, Router, types
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from config import TOKEN
 
 # Bot token can be obtained via https://t.me/BotFather
 
@@ -33,6 +32,7 @@ async def echo_handler(message: types.Message) -> None:
     By default, message handler will handle all message types (like text, photo, sticker and etc.)
     """
     await message.answer("Привет! Это квест-бот Лимонад Пати. Начинаем в 17:00. Ждем тебя❤️ ")
+
 
 async def main() -> None:
     # Dispatcher is a root router
