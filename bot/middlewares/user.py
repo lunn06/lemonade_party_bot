@@ -1,11 +1,10 @@
 from typing import Callable, Dict, Any, Awaitable
 
-from aiogram import BaseMiddleware, F
-from aiogram.dispatcher.flags import get_flag, check_flags
-from aiogram.types import TelegramObject, Message, CallbackQuery, User
+from aiogram import BaseMiddleware
+from aiogram.types import TelegramObject, User
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.database.requests import ensure_user, get_user_by_id
+from bot.database.requests import ensure_user
 
 
 class EnsureUserMiddleware(BaseMiddleware):
@@ -20,12 +19,10 @@ class EnsureUserMiddleware(BaseMiddleware):
 
         # user_request_flag = get_flag(data, "user_request")
         # user_request_flag = check_flags(data, F.contains())
-        ensured = False
         dbuser = await ensure_user(session, user_id=user.id, user_name=user.username)
-        if dbuser is None:
-            ensured = True
-            dbuser = await get_user_by_id(session, user_id=user.id)
-        data["user"] = dbuser
-        data["user_ensured"] = ensured
+        ensured = dbuser is None
+        # dbuser = await get_user_by_id(session, user_id=user.id)
+        # data["user"] = dbuser
+        data["ensured_user"] = ensured
 
         await handler(event, data)

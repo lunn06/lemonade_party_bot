@@ -23,10 +23,11 @@ class Config(BaseSettings):
     locales_path: DirectoryPath
     map_path: FilePath
     admins: list[int]
+    # star_stations: list[str]
     stations_list: list[str]
-    star_stations: Optional[list[str]]
-    star_station_points: PositiveInt
-    usual_station_points: PositiveInt
+    star_stations: list[str]
+    star_station_points: int
+    usual_station_points: int
 
     # model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
