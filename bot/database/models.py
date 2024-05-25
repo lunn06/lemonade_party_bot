@@ -40,6 +40,7 @@ class User(Base):
     )
     user_name: Mapped[str] = mapped_column(
         TEXT,
+        nullable=True
     )
     lottery: Mapped[int] = mapped_column(
         INTEGER,
