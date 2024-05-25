@@ -41,8 +41,7 @@ async def main():
     await dp.start_polling(bot)
 
 
-@dp.message()
-@dp.message.filter(AdminFilter(config.admins))
+@dp.message(AdminFilter(config.admins))
 async def send_message_handler(msg: Message, session: AsyncSession, bot: Bot):
     user_stmnt = select(User.telegram_id)
     users = await session.execute(user_stmnt)
