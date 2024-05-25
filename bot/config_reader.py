@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 from environs import Env
-from pydantic import SecretStr, PostgresDsn, DirectoryPath, PositiveInt, PositiveFloat
+from pydantic import SecretStr, PostgresDsn, DirectoryPath, PositiveInt, PositiveFloat, FilePath
 from pydantic_settings import BaseSettings
 
 env = Env()
@@ -20,6 +20,7 @@ class Config(BaseSettings):
     flood_awaiting: PositiveFloat
     telegram_secret_token: str
     locales_path: DirectoryPath
+    map_path: FilePath
     admins: list[int]
     stations_list: list[str]
     star_stations: list[str]

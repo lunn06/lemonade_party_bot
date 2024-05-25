@@ -85,6 +85,11 @@ class UserStations(Base):
         ForeignKey("stations.station_name"),
         primary_key=True
     )
+    completed_at: Mapped[int] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=utcnow()
+    )
     # telegram_user: Mapped["User"] = relationship(
     #     back_populates="user_stations"
     # )

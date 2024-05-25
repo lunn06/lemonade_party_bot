@@ -1,5 +1,6 @@
 .env
 alembic.ini
+locustfile.py
 
 stubs/
 secrets/

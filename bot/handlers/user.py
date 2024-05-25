@@ -1,12 +1,13 @@
 import sqlalchemy.exc
-from aiogram import F, Router
+from aiogram import F, Router, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message
+from aiogram.types import Message, BotCommandScopeChat, BotCommand
 from fluentogram import TranslatorRunner
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config_reader import Config, parse_config
+# from bot.database.models import User
 from bot.database.requests import (
     ensure_user,
     get_user_by_id,
@@ -15,7 +16,7 @@ from bot.database.requests import (
 )
 from bot.utils.i18n import create_translator_hub
 from bot.utils.secrets import Secret
-from bot.utils.telegram import build_keyboard
+from bot.utils.telegram import build_keyboard, send_map
 
 router = Router()
 config = parse_config()
@@ -29,7 +30,7 @@ class BotState(StatesGroup):
 
 
 @router.message(CommandStart())
-async def start_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner) -> None:
+async def start_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner, config: Config, bot: Bot) -> None:
     keyboard = build_keyboard(
         i18n.wheretogo.button(),
         i18n.infocard.button(),
@@ -52,11 +53,19 @@ async def start_handler(msg: Message, session: AsyncSession, i18n: TranslatorRun
 
     start_message = i18n.start.message(lottery=user.lottery)
     await msg.answer(start_message, reply_markup=keyboard)
-    # await send_photo(msg, 'static/map.png')
+
+    await send_map(msg, file_path=config.map_path)
+
+    if msg.from_user.id in config.admins:
+        # await bot.set_chat_menu_button(msg.chat.id, MenuButtonCommands("/panel"))
+        await bot.set_my_commands(
+            [BotCommand(command="/lottery", description="Показывает результаты лотереи")],
+            scope=BotCommandScopeChat(chat_id=msg.chat.id)
+        )
 
 
 # @router.message(F.text.contains("🍋 Куда пойти?") | F.text.contains("куда пойти") | F.text.contains("Куда пойти"))
-@router.message(F.text.contains(outer_i18n_ru.wheretogo.button()))
+@router.message(F.text.contains(outer_i18n_ru.wheretogo.button()), flags={"user_request": True})
 async def wheretogo_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner, config: Config) -> None:
     assert msg.from_user is not None
 
@@ -110,8 +119,9 @@ async def wheretogo_handler(msg: Message, session: AsyncSession, i18n: Translato
 
 # @router.message(F.text.contains("🎯 Карта") | F.text.lower().contains("карта"))
 @router.message(F.text.contains(outer_i18n_ru.infocard.button()))
-async def infocard_handler(msg: Message, i18n: TranslatorRunner) -> None:
+async def infocard_handler(msg: Message, i18n: TranslatorRunner, config: Config) -> None:
     await msg.answer(i18n.infocard.message())
+    await send_map(msg, file_path=config.map_path)
     # await send_photo(msg, 'static/map.png')
     # await msg.answer_photo(MAP_IMAGE_ID)
 
