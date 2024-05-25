@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import uvloop
 from aiogram import Dispatcher, Bot
@@ -65,4 +66,5 @@ async def usual_handler(msg: Message, session: AsyncSession, i18n: TranslatorRun
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     uvloop.run(main())
