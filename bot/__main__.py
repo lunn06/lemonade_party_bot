@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 dp = Dispatcher(storage=MemoryStorage())
 bot = Bot(
     token=config.bot_token.get_secret_value(),
-    default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN)
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
 
 
