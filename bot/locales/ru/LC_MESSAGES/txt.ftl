@@ -122,7 +122,7 @@ station-name =
         [ball] Мяч в клетке
         [photozone] Фотозона
         [biser] Бисер
-        [tatoo] Тату от STK Tattoo studio
+        [tatoo] Тату студия "Кисти"
         [vr] Вирутальная реальность
         [quiz] Квиз, плиз! от ККО
         [electrosheme] Электроcхемы
