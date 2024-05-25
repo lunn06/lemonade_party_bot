@@ -55,16 +55,19 @@ async def get_top_users(session: AsyncSession, limit: int = 10) -> list[Any]:
     users = await session.execute(user_stmt)
 
     for user in [r[0] for r in users]:
-        min_stmt = select(func.min(UserStations.completed_at)).filter(
-            UserStations.telegram_id == user.telegram_id)
-        max_stmt = select(func.max(UserStations.completed_at)).filter(
-            UserStations.telegram_id == user.telegram_id)
+        try:
+            min_stmt = select(func.min(UserStations.completed_at)).filter(
+                UserStations.telegram_id == user.telegram_id)
+            max_stmt = select(func.max(UserStations.completed_at)).filter(
+                UserStations.telegram_id == user.telegram_id)
 
-        max_completed_at = await session.scalar(max_stmt)
-        min_completed_at = await session.scalar(min_stmt)
-        quest_time = max_completed_at - min_completed_at
+            max_completed_at = await session.scalar(max_stmt)
+            min_completed_at = await session.scalar(min_stmt)
+            quest_time = max_completed_at - min_completed_at
 
-        user.quest_time = quest_time
+            user.quest_time = quest_time
+        except:
+            continue
 
     await session.commit()
 
