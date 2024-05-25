@@ -51,7 +51,7 @@ async def send_message_handler(msg: Message, session: AsyncSession, bot: Bot):
 
     for user_id in users:
         user_id = user_id[0]
-        await asyncio.sleep(0.04)
+        await asyncio.sleep(1)
         await bot.send_message(chat_id=user_id, text=msg.text)
 
 
