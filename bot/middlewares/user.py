@@ -20,7 +20,7 @@ class EnsureUserMiddleware(BaseMiddleware):
         # user_request_flag = get_flag(data, "user_request")
         # user_request_flag = check_flags(data, F.contains())
         user_name = user.username if user.username is not None else "no_user_name"
-        dbuser = await ensure_user(session, user_id=user.id, user_name=user.username)
+        dbuser = await ensure_user(session, user_id=user.id, user_name=user_name)
         ensured = dbuser is None
         # dbuser = await get_user_by_id(session, user_id=user.id)
         # data["user"] = dbuser
