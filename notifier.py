@@ -19,6 +19,7 @@ from bot.utils.i18n import create_translator_hub
 
 config: Config = parse_config()
 bot = Bot(token=config.bot_token.get_secret_value(), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot.delete_webhook()
 dp = Dispatcher()
 
 
