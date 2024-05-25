@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.database.requests import ensure_user, get_user_by_id
 
 
-class CheckRegisteredMiddleware(BaseMiddleware):
+class EnsureUserMiddleware(BaseMiddleware):
     async def __call__(
             self,
             handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
@@ -18,12 +18,14 @@ class CheckRegisteredMiddleware(BaseMiddleware):
         user: User = data.get("event_from_user")
         session: AsyncSession = data.get("session")
 
-        user_request_flag = get_flag(data, "user_request")
+        # user_request_flag = get_flag(data, "user_request")
         # user_request_flag = check_flags(data, F.contains())
-        if user_request_flag:
-            dbuser = await ensure_user(session, user_id=user.id, user_name=user.username)
-            if dbuser is None:
-                dbuser = await get_user_by_id(session, user_id=user.id)
-            data["user"] = dbuser
+        ensured = False
+        dbuser = await ensure_user(session, user_id=user.id, user_name=user.username)
+        if dbuser is None:
+            ensured = True
+            dbuser = await get_user_by_id(session, user_id=user.id)
+        data["user"] = dbuser
+        data["user_ensured"] = ensured
 
         await handler(event, data)

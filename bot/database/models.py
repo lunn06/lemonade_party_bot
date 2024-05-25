@@ -2,7 +2,7 @@ import random
 from collections import deque
 
 from sqlalchemy import ForeignKey, TEXT
-from sqlalchemy.dialects.postgresql import TIMESTAMP, BIGINT, BOOLEAN, INTEGER
+from sqlalchemy.dialects.postgresql import TIMESTAMP, BIGINT, BOOLEAN, INTEGER, INTERVAL
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import expression
@@ -50,6 +50,25 @@ class User(Base):
         INTEGER,
         default=0
     )
+    quest_time: Mapped[int] = mapped_column(
+        INTERVAL,
+        nullable=True,
+    )
+
+    # async def quest_time(self, session: AsyncSession):
+    #     # min_completed_at = session.query(func.min(UserStations.completed_at)).filter(
+    #     #     UserStations.telegram_id == self.telegram_id).scalar()
+    #     # max_completed_at = session.query(func.max(UserStations.completed_at)).filter(
+    #     #     UserStations.telegram_id == self.telegram_id).scalar()
+    #     min_stmt = select(func.min(UserStations.completed_at)).filter(
+    #         UserStations.telegram_id == self.telegram_id)
+    #     max_stmt = select(func.max(UserStations.completed_at)).filter(
+    #         UserStations.telegram_id == self.telegram_id)
+    #
+    #     min_completed_at = await session.scalar(min_stmt)
+    #     max_completed_at = await session.scalar(max_stmt)
+    #
+    #     return max_completed_at - min_completed_at
     # user_stations: Mapped[list["UserStations"]] = relationship(
     #     back_populates="telegram_user",
     #     cascade="all, delete-orphan"

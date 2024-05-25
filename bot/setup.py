@@ -11,7 +11,7 @@ from bot.middlewares import (
     AntiFloodMiddleware,
     DbSessionMiddleware,
     TranslatorRunnerMiddleware,
-    CheckRegisteredMiddleware
+    EnsureUserMiddleware
 )
 from bot.utils.i18n import create_translator_hub
 from bot.utils.secrets import Secret
@@ -44,7 +44,7 @@ async def setup_dp(dp: Dispatcher, config: Config) -> None:
     dp.update.middleware(TranslatorRunnerMiddleware())
     dp.message.middleware(AntiFloodMiddleware(config.flood_awaiting))
     dp.update.middleware(DbSessionMiddleware(session_pool=session_maker))
-    # dp.update.middleware(CheckRegisteredMiddleware())
+    # dp.update.middleware(EnsureUserMiddleware())
     dp.include_routers(*get_routers())
 
     dp["config"] = config

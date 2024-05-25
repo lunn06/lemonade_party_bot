@@ -7,6 +7,7 @@ from fluentogram import TranslatorRunner
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config_reader import Config, parse_config
+from bot.database.models import User
 # from bot.database.models import User
 from bot.database.requests import (
     ensure_user,
@@ -29,8 +30,17 @@ class BotState(StatesGroup):
     is_not_working = State()
 
 
+
 @router.message(CommandStart())
-async def start_handler(msg: Message, session: AsyncSession, i18n: TranslatorRunner, config: Config, bot: Bot) -> None:
+async def start_handler(
+        msg: Message,
+        session: AsyncSession,
+        i18n: TranslatorRunner,
+        config: Config,
+        bot: Bot,
+        user: User,
+        user_ensured: bool
+) -> None:
     keyboard = build_keyboard(
         i18n.wheretogo.button(),
         i18n.infocard.button(),
@@ -40,16 +50,16 @@ async def start_handler(msg: Message, session: AsyncSession, i18n: TranslatorRun
         i18n.help.button(),
     )
 
-    assert msg.from_user is not None
-
-    try:
-        await ensure_user(session, user_id=msg.from_user.id, user_name=msg.from_user.full_name)
-    except sqlalchemy.exc.IntegrityError:
-        await ensure_user(session, user_id=msg.from_user.id, user_name=msg.from_user.full_name)
-
-    user = await get_user_by_id(session, msg.from_user.id)
-
-    assert user is not None
+    # assert msg.from_user is not None
+    #
+    # try:
+    #     await ensure_user(session, user_id=msg.from_user.id, user_name=msg.from_user.full_name)
+    # except sqlalchemy.exc.IntegrityError:
+    #     await ensure_user(session, user_id=msg.from_user.id, user_name=msg.from_user.full_name)
+    #
+    # user = await get_user_by_id(session, msg.from_user.id)
+    #
+    # assert user is not None
 
     start_message = i18n.start.message(lottery=user.lottery)
     await msg.answer(start_message, reply_markup=keyboard)
@@ -74,26 +84,26 @@ async def wheretogo_handler(msg: Message, session: AsyncSession, i18n: Translato
 
     await msg.answer(i18n.wheretogo.message())
 
-    answer = i18n.station.header(type="star")
-    answer += "\n\n"
-    for station in config.star_stations:
-        station_name = i18n.station.name(station=station)
-        station_description = i18n.station.description(station=station)
-        if station not in user_stations:
-            answer += i18n.undone.station(
-                type="star",
-                station_name=station_name,
-                description=station_description
-            )
-            answer += "\n\n"
-        else:
-            answer += i18n.done.station(
-                station_name=station_name,
-                description=station_description
-            )
-            answer += "\n\n"
+    # answer = i18n.station.header(type="star")
+    # answer += "\n\n"
+    # for station in config.star_stations:
+    #     station_name = i18n.station.name(station=station)
+    #     station_description = i18n.station.description(station=station)
+    #     if station not in user_stations:
+    #         answer += i18n.undone.station(
+    #             type="star",
+    #             station_name=station_name,
+    #             description=station_description
+    #         )
+    #         answer += "\n\n"
+    #     else:
+    #         answer += i18n.done.station(
+    #             station_name=station_name,
+    #             description=station_description
+    #         )
+    #         answer += "\n\n"
 
-    answer += i18n.station.header(type="unstar")
+    answer = i18n.station.header(type="unstar")
     answer += "\n\n"
     unstar_stations = [st for st in config.stations_list if st not in config.star_stations]
     for station in unstar_stations:
@@ -232,8 +242,8 @@ async def unique_handler(
 
         user_stations_names += [secret.name]
 
-        if set(config.star_stations) <= set(user_stations_names):
-            answer = i18n.star.message()
+        # if set(config.star_stations) <= set(user_stations_names):
+        #     answer = i18n.star.message()
 
         if sorted(config.stations_list) == sorted(user_stations_names):
             answer = i18n.superstar.message()

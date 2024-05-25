@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Optional
 
 from environs import Env
 from pydantic import SecretStr, PostgresDsn, DirectoryPath, PositiveInt, PositiveFloat, FilePath
@@ -23,7 +24,7 @@ class Config(BaseSettings):
     map_path: FilePath
     admins: list[int]
     stations_list: list[str]
-    star_stations: list[str]
+    star_stations: Optional[list[str]]
     star_station_points: PositiveInt
     usual_station_points: PositiveInt
 
