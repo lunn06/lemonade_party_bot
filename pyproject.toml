@@ -22,10 +22,12 @@ fastapi = "^0.111.0"
 
 
 [tool.poetry.group.dev.dependencies]
+locust = "^2.27.0"
 i18n = "^0.2"
 alembic = "^1.13.1"
 pytest = "^8.2.0"
 mypy = "^1.10.0"
+ftfy = "^6.2.0"
 
 [build-system]
 requires = ["poetry-core"]

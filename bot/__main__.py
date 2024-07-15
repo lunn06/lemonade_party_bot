@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 dp = Dispatcher(storage=MemoryStorage())
 bot = Bot(
     token=config.bot_token.get_secret_value(),
-    default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN)
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
 
 
@@ -33,15 +33,15 @@ async def lifespan(_app: FastAPI) -> AbstractAsyncContextManager[None]:
 
 
 async def webhook(
-        request: Request,
+        request: Update,
         x_telegram_bot_api_secret_token: Annotated[str | None, Header()] = None
 ) -> None | dict:
     """ Register webhook endpoint for telegram bot"""
     if x_telegram_bot_api_secret_token != config.telegram_secret_token:
         logger.error("Wrong secret token !")
         return {"status": "error", "message": "Wrong secret token !"}
-    telegram_update = Update(**(await request.json()))
-    await dp.feed_webhook_update(bot=bot, update=telegram_update)
+    # telegram_update = Update(**(await request.json()))
+    await dp.feed_webhook_update(bot=bot, update=request)
 
 
 def get_app() -> FastAPI:
@@ -63,4 +63,4 @@ if __name__ == "__main__":
         uvloop.run(run_bot(dp, bot))
     else:
         app = get_app()
-        uvicorn.run(app, port=config.port, loop="uvloop")
+        uvicorn.run(app, port=config.port, loop="uvloop", interface="asgi3")

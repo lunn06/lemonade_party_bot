@@ -74,7 +74,7 @@ class MockedBot(Bot):
             first_name="FirstName",
             last_name="LastName",
             username="tbot",
-            language_code="uk-UA",
+            language_code="ru-RU",
         )
 
     def add_result_for(

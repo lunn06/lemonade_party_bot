@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from typing import Any
+
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config_reader import Config
@@ -38,16 +40,51 @@ async def ensure_station(session: AsyncSession, station_name: str, coast: int, i
     await session.commit()
 
 
-async def get_top_users(session: AsyncSession, limit: int = 100) -> list[User]:
-    stmt = select(User).order_by(User.points).limit(limit)
-    res = await session.execute(stmt)
-    return [r[0] for r in res]
+async def get_top_users(session: AsyncSession, limit: int = 10) -> list[Any]:
+    # stmt = (
+    #     select(
+    #         User.user_name,
+    #         User.lottery,
+    #         User.points,
+    #     ).subquery()
+    # )
+    # res = await session.execute(stmt)
+    # return [r[0] for r in res]
 
-    # if res is None:
-    #     return []
-    # if isinstance(res, User):
-    #     return [res, ]
-    # return list(res)
+    user_stmt = select(User).order_by(User.points).limit(limit)
+    users = await session.execute(user_stmt)
+
+    for user in [r[0] for r in users]:
+        try:
+            min_stmt = select(func.min(UserStations.completed_at)).filter(
+                UserStations.telegram_id == user.telegram_id)
+            max_stmt = select(func.max(UserStations.completed_at)).filter(
+                UserStations.telegram_id == user.telegram_id)
+
+            max_completed_at = await session.scalar(max_stmt)
+            min_completed_at = await session.scalar(min_stmt)
+            quest_time = max_completed_at - min_completed_at
+
+            user.quest_time = quest_time
+        except:
+            continue
+    await session.commit()
+
+
+    stmt = (
+        select(
+            User.user_name,
+            User.points,
+            User.lottery,
+            User.quest_time
+        ).order_by(
+            User.points.desc(),
+            User.quest_time
+        ).limit(limit)
+    )
+    users = await session.execute(stmt)
+
+    return users
 
 
 async def get_user_by_id(session: AsyncSession, user_id: int) -> User | None:
@@ -61,7 +98,7 @@ async def get_user_by_id(session: AsyncSession, user_id: int) -> User | None:
     return await session.scalar(stmt)
 
 
-async def ensure_user(session: AsyncSession, user_id: int, user_name: str) -> None:
+async def ensure_user(session: AsyncSession, user_id: int, user_name: str) -> User | None:
     """
     Создаёт пользователя, если его раньше не было
     :param session: объект AsyncSession
@@ -70,7 +107,7 @@ async def ensure_user(session: AsyncSession, user_id: int, user_name: str) -> No
     """
     existing_user = await get_user_by_id(session, user_id)
     if existing_user is not None:
-        return
+        return existing_user
     user = User(telegram_id=user_id, user_name=user_name)
     session.add(user)
     await session.commit()

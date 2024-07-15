@@ -2,7 +2,7 @@ import random
 from collections import deque
 
 from sqlalchemy import ForeignKey, TEXT
-from sqlalchemy.dialects.postgresql import TIMESTAMP, BIGINT, BOOLEAN, INTEGER
+from sqlalchemy.dialects.postgresql import TIMESTAMP, BIGINT, BOOLEAN, INTEGER, INTERVAL
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import expression
@@ -40,6 +40,7 @@ class User(Base):
     )
     user_name: Mapped[str] = mapped_column(
         TEXT,
+        nullable=True
     )
     lottery: Mapped[int] = mapped_column(
         INTEGER,
@@ -50,6 +51,25 @@ class User(Base):
         INTEGER,
         default=0
     )
+    quest_time: Mapped[int] = mapped_column(
+        INTERVAL,
+        nullable=True,
+    )
+
+    # async def quest_time(self, session: AsyncSession):
+    #     # min_completed_at = session.query(func.min(UserStations.completed_at)).filter(
+    #     #     UserStations.telegram_id == self.telegram_id).scalar()
+    #     # max_completed_at = session.query(func.max(UserStations.completed_at)).filter(
+    #     #     UserStations.telegram_id == self.telegram_id).scalar()
+    #     min_stmt = select(func.min(UserStations.completed_at)).filter(
+    #         UserStations.telegram_id == self.telegram_id)
+    #     max_stmt = select(func.max(UserStations.completed_at)).filter(
+    #         UserStations.telegram_id == self.telegram_id)
+    #
+    #     min_completed_at = await session.scalar(min_stmt)
+    #     max_completed_at = await session.scalar(max_stmt)
+    #
+    #     return max_completed_at - min_completed_at
     # user_stations: Mapped[list["UserStations"]] = relationship(
     #     back_populates="telegram_user",
     #     cascade="all, delete-orphan"
@@ -84,6 +104,11 @@ class UserStations(Base):
     station_name: Mapped[str] = mapped_column(
         ForeignKey("stations.station_name"),
         primary_key=True
+    )
+    completed_at: Mapped[int] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=utcnow()
     )
     # telegram_user: Mapped["User"] = relationship(
     #     back_populates="user_stations"
