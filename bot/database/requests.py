@@ -68,8 +68,8 @@ async def get_top_users(session: AsyncSession, limit: int = 10) -> list[Any]:
             user.quest_time = quest_time
         except:
             continue
-
     await session.commit()
+
 
     stmt = (
         select(
