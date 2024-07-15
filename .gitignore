@@ -1,0 +1,7 @@
+.env
+alembic.ini
+locustfile.py
+
+stubs/
+secrets/
+bot/locales/ru/static/
