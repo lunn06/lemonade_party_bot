@@ -1,4 +1,4 @@
-.env
+../first_impression/.env
 alembic.ini
 locustfile.py
 

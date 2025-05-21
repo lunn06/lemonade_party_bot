@@ -1,0 +1,21 @@
+version: "3"
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: "lemonade_bot"
+      POSTGRES_USER: "lemonade_user"
+      POSTGRES_PASSWORD: "password"
+    ports:
+      - "5434:5432"
+
+  dragonfly:
+    image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
+    ports:
+      - "6379:6379"
+    # For better performance, consider `host` mode instead `port` to avoid docker NAT.
+    # `host` mode is NOT currently supported in Swarm Mode.
+    # https://docs.docker.com/compose/compose-file/compose-file-v3/#network_mode
+    # network_mode: "host"
+#    volumes:
+#      - ./deploydata/dragonflydata:/data

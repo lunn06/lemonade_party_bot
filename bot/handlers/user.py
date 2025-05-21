@@ -148,8 +148,6 @@ async def infocard_handler(msg: Message, i18n: TranslatorRunner, config: Config,
 
     await msg.answer(i18n.infocard.message())
     await send_map(msg, file_path=config.map_path)
-    # await send_photo(msg, 'static/map.png')
-    # await msg.answer_photo(MAP_IMAGE_ID)
 
 
 # @router.message(F.text.contains("🤩 Моя статистика") | F.text.lower().contains("cтатистика"))
@@ -217,9 +215,9 @@ async def help_handler(msg: Message, i18n: TranslatorRunner, ensured_user: bool)
 #         await msg.answer("Эту посхалку ты уже сканировал!!!!")
 
 
-@router.message(F.text.regexp(r"^\d{6}$"))
-@router.message(F.text.regexp(r"^\d{3} \d{3}$"))
-@router.message(F.text.regexp(r"^\d{2} \d{2} \d{2}$"))
+# @router.message(F.text.regexp(r"^\d{6}$"))
+# @router.message(F.text.regexp(r"^\d{3} \d{3}$"))
+# @router.message(F.text.regexp(r"^\d{2} \d{2} \d{2}$"))
 async def unique_handler(
         msg: Message,
         session: AsyncSession,

@@ -7,17 +7,18 @@ import uvloop
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums.parse_mode import ParseMode
-from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import Update
 from fastapi import FastAPI, Header
-from starlette.requests import Request
+from redis.asyncio import Redis
 
 from bot.config_reader import parse_config
 from bot.setup import setup_dp, setup_bot, setup_webhook
 
 config = parse_config()
 logger = logging.getLogger(__name__)
-dp = Dispatcher(storage=MemoryStorage())
+storage = RedisStorage(redis=Redis())
+dp = Dispatcher(storage=storage)
 bot = Bot(
     token=config.bot_token.get_secret_value(),
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
